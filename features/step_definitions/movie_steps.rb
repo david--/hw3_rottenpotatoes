@@ -43,3 +43,30 @@ Then /I should (not )?see (all the |any )?movie(s)?/ do |not_,how_many,s|
   assert(page.find_by_id("movies").find("tbody").all("tr").count == should_be,"NO HAY #{should_be} PELICULAS!!")
 end
 
+#table is the id of the table
+#field is the text that will be searched in TABLE HEADERS
+#That will not work with dates that are not in the current format!! (alphabetically orderable)
+Then /I should see table (.*) ordered by: (.*)/ do |table,field|
+  #find out the column We are searching for
+  cnt = 0
+  order_field_number = 0
+  page.find_by_id(table).find("thead tr").all("th").each do |node|
+    cnt = cnt + 1
+    if node.text.downcase =~ /#{field}/ then
+      order_field_number = cnt
+    end
+  end
+  #verify ordering in that column values
+  page.find_by_id(table).find("tbody").all("tr").each do |node|
+    cnt = 0
+    former_value = nil
+    node.all("td").each do |field|
+      cnt = cnt + 1
+      if cnt == order_field_number then
+        if former_value.nil? then former_value = field.text.downcase; end
+        assert(field.text.downcase >= former_value, "ORDERING ERROR!! #{field.text} !> #{former_value}")
+        former_value = field.text.downcase
+      end
+    end
+  end
+end
